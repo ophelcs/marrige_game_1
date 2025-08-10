@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marriage Preparation Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .board-tile {
+            transition: all 0.3s ease;
+        }
+        
+        .board-tile:hover {
+            transform: scale(1.05);
+        }
+        
+        .player-avatar {
+            position: absolute;
+            font-size: 28px;
+            z-index: 20;
+            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));
+            transition: all 0.8s ease;
+        }
+        
+        .dice-animation {
+            animation: bounce 0.6s ease-in-out;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 60%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            80% { transform: translateY(-5px); }
+        }
+        
+        .rolling {
+            animation: spin 0.1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .modal {
+            backdrop-filter: blur(8px);
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #fdf2f8 0%, #f3e8ff 50%, #ede9fe 100%);
+        }
+        
+        .tile {
+            width: 64px;
+            height: 64px;
+            border: 2px solid #6b7280;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        @media (min-width: 768px) {
+            .tile {
+                width: 80px;
+                height: 80px;
+            }
+        }
+        
+        .tile:hover {
+            transform: scale(1.05);
+        }
+        
+        .tile-number {
+            position: absolute;
+            top: 2px;
+            left: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            color: #374151;
+            background: rgba(255,255,255,0.9);
+            border-radius: 3px;
+            padding: 2px 4px;
+        }
+        
+        .tile-decoration {
+            font-size: 18px;
+            opacity: 0.8;
+        }
+        
+        .tile-start {
+            background: linear-gradient(135deg, #fce7f3 0%, #f9a8d4 100%);
+            border-color: #ec4899;
+        }
+        
+        .tile-ladder {
+            background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+            border-color: #22c55e;
+        }
+        
+        .tile-activity {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            border-color: #3b82f6;
+        }
+        
+        .tile-scripture {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-color: #f59e0b;
+        }
+        
+        .tile-special {
+            background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+            border-color: #7c3aed;
+        }
+        
+        .tile-branch {
+            background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
+            border-color: #f97316;
+        }
+        
+        .tile-quiz {
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            border-color: #64748b;
+        }
+        
+        .tile-note {
+            background: linear-gradient(135deg, #e6fffa 0%, #b2f5ea 100%);
+            border-color: #14b8a6;
+        }
+        
+        .tile-finish {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-color: #f59e0b;
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen">
+    <!-- Main Container -->
+    <div class="container mx-auto p-4 max-w-7xl">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl md:text-6xl font-bold bg-gradient-to-r from-pink-500 to-purple-600 bg-clip-text text-transparent mb-4">
+                💕 Marriage Preparation Game 💕
+            </h1>
+            <p class="text-lg text-gray-600">Strengthen your relationship through faith, conversation, and love</p>
+        </div>
+
+        <!-- Main Menu Screen -->
+        <div id="mainMenu" class="bg-white rounded-3xl shadow-2xl p-8 border-4 border-pink-200">
+            <div class="text-center">
+                <h2 class="text-2xl font-bold text-purple-700 mb-6">Choose Your Adventure</h2>
+                
+                <!-- Instructions Toggle -->
+                <button id="toggleInstructions" class="mb-6 px-6 py-2 bg-blue-100 text-blue-700 rounded-lg border border-blue-300 hover:bg-blue-200 transition-all flex items-center gap-2 mx-auto">
+                    📋 How to Play
+                </button>
+                
+                <!-- Instructions Panel -->
+                <div id="instructionsPanel" class="hidden mb-6 p-6 bg-blue-50 rounded-xl border-2 border-blue-200 text-left">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-blue-800">📋 How to Play</h3>
+                        <button id="closeInstructions" class="text-blue-600 hover:text-blue-800">✕</button>
+                    </div>
+                    <div class="text-blue-700 space-y-2 text-sm">
+                        <p><strong>Online Play:</strong></p>
+                        <p>1. One person creates a game and shares the Game ID</p>
+                        <p>2. Partner joins using the Game ID</p>
+                        <p>3. Both set up names/avatars and play together!</p>
+                        <br>
+                        <p><strong>💡 Tips:</strong></p>
+                        <p>• Take turns rolling dice and moving around the board</p>
+                        <p>• Answer questions honestly for the best experience</p>
+                        <p>• Click tiles to read activities and scripture</p>
+                        <p>• Game saves automatically for online play</p>
+                    </div>
+                </div>
+
+                <!-- Menu Buttons -->
+                <div class="grid gap-4 md:gap-6">
+                    <button id="createOnlineGame" class="p-6 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold text-lg hover:from-purple-600 hover:to-pink-600 transition-all transform hover:scale-105 flex items-center justify-center gap-3">
+                        📱 🌐 Create Online Game
+                    </button>
+                    
+                    <button id="joinGameBtn" class="p-6 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl font-semibold text-lg hover:from-blue-600 hover:to-cyan-600 transition-all transform hover:scale-105 flex items-center justify-center gap-3">
+                        👫 🚪 Join Game
+                    </button>
+                    
+                    <button id="playLocalBtn" class="p-6 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-xl font-semibold text-lg hover:from-gray-600 hover:to-gray-700 transition-all transform hover:scale-105 flex items-center justify-center gap-3">
+                        🖥️ 🏠 Play Locally
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Online Setup Screen -->
+        <div id="onlineSetup" class="hidden bg-white rounded-3xl shadow-2xl p-8 border-4 border-pink-200 max-w-2xl mx-auto">
+            <h2 class="text-3xl font-bold text-purple-700 mb-6 text-center">🎮 Game Created!</h2>
+            
+            <div class="bg-blue-50 border-2 border-blue-200 rounded-xl p-6 mb-6">
+                <h3 class="font-bold text-blue-800 mb-4">Share this Game ID with your partner:</h3>
+                <div class="bg-yellow-100 border-2 border-yellow-400 rounded-lg p-4 text-center mb-4">
+                    <div id="gameIdDisplay" class="font-mono text-2xl font-bold text-yellow-800"></div>
+                </div>
+                <button id="copyGameId" class="w-full bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-all flex items-center justify-center gap-2">
+                    📋 Copy Game ID
+                </button>
+            </div>
+
+            <div class="bg-green-50 border-2 border-green-200 rounded-xl p-4 mb-6 text-center">
+                <div class="text-green-700 font-semibold">✅ Game ready! Share the ID above, then both players set up below.</div>
+            </div>
+
+            <div class="flex gap-4">
+                <button id="setupPlayerBtn" class="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-xl font-semibold hover:from-purple-600 hover:to-pink-600 transition-all">
+                    🎮 Set Up Your Player
+                </button>
+                <button id="backToMenuFromSetup" class="px-6 py-3 bg-gray-500 text-white rounded-xl hover:bg-gray-600 transition-all">
+                    ← Back
+                </button>
+            </div>
+        </div>
+
+        <!-- Join Game Screen -->
+        <div id="joinGameScreen" class="hidden bg-white rounded-3xl shadow-2xl p-8 border-4 border-pink-200 max-w-2xl mx-auto">
+            <h2 class="text-3xl font-bold text-purple-700 mb-6 text-center">🔗 Join Existing Game</h2>
+            
+            <div class="bg-blue-50 border-2 border-blue-200 rounded-xl p-6 mb-6">
+                <h3 class="font-bold text-blue-800 mb-4">Enter the Game ID your partner shared:</h3>
+                <input type="text" id="joinGameInput" placeholder="Enter Game ID (e.g., MPG123ABC)" 
+                       class="w-full p-4 text-xl text-center border-2 border-purple-300 rounded-lg focus:border-purple-500 focus:outline-none font-mono">
+            </div>
+
+            <div class="flex gap-4">
+                <button id="joinGameSubmit" class="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-6 py-3 rounded-xl font-semibold hover:from-blue-600 hover:to-cyan-600 transition-all">
+                    Join Game
+                </button>
+                <button id="backToMenuFromJoin" class="px-6 py-3 bg-gray-500 text-white rounded-xl hover:bg-gray-600 transition-all">
+                    ← Back
+                </button>
+            </div>
+        </div>
+
+        <!-- Player Setup Screen -->
+        <div id="playerSetup" class="hidden bg-white rounded-3xl shadow-2xl p-8 border-4 border-pink-200 max-w-2xl mx-auto">
+            <div id="onlineStatus" class="hidden bg-green-50 border-2 border-green-200 rounded-xl p-4 mb-6 text-center">
+                <div class="text-green-700 font-semibold">🌐 Playing online together!</div>
+            </div>
+            
+            <h2 class="text-3xl font-bold text-purple-700 mb-6 text-center">💝 Your Player Info</h2>
+            
+            <div class="bg-gradient-to-br from-pink-50 to-purple-50 rounded-xl p-6 border-2 border-pink-200 mb-6">
+                <h3 class="font-bold text-pink-700 mb-4">Enter Your Name</h3>
+                <input type="text" id="playerNameInput" placeholder="Your name" maxlength="15"
+                       class="w-full p-3 border-2 border-pink-300 rounded-lg focus:border-pink-500 focus:outline-none text-lg">
+                
+                <h3 class="font-bold text-pink-700 mt-6 mb-4">Choose Your Avatar</h3>
+                <div id="avatarGrid" class="grid grid-cols-6 md:grid-cols-8 gap-2">
+                    <!-- Avatars will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <div id="gameIdInfo" class="hidden bg-blue-50 border-2 border-blue-200 rounded-xl p-4 mb-6">
+                <div class="text-blue-800 font-bold">Game ID: <span id="currentGameIdDisplay"></span></div>
+                <div class="text-blue-600 text-sm mt-1">Make sure your partner uses the same Game ID!</div>
+            </div>
+
+            <div class="flex gap-4">
+                <button id="readyToPlay" class="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-4 rounded-xl font-semibold text-lg hover:from-purple-600 hover:to-pink-600 transition-all transform hover:scale-105">
+                    💕 Ready to Play! 💕
+                </button>
+                <button id="backToMenuFromPlayerSetup" class="px-6 py-4 bg-gray-500 text-white rounded-xl hover:bg-gray-600 transition-all">
+                    ← Back
+                </button>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="gameScreen" class="hidden">
+            <div id="gameOnlineStatus" class="hidden bg-green-50 border-2 border-green-200 rounded-xl p-3 mb-4 text-center">
+                <div class="text-green-700 font-semibold">🌐 Playing online together! Take turns and enjoy your journey!</div>
+            </div>
+
+            <!-- Board Container -->
+            <div class="bg-white rounded-3xl shadow-2xl p-4 md:p-8 border-4 border-pink-200 mb-6">
+                <div id="gameBoard" class="grid grid-cols-10 gap-1 md:gap-2 mx-auto w-fit bg-gradient-to-br from-pink-50 to-purple-50 p-4 rounded-xl border-2 border-pink-200 relative">
+                    <!-- Board tiles will be generated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="bg-white rounded-3xl shadow-2xl p-4 md:p-8 border-4 border-pink-200">
+                <!-- Current Player Display -->
+                <div id="currentPlayerDisplay" class="text-center mb-6 p-4 bg-gradient-to-r from-purple-100 to-pink-100 rounded-xl border-2 border-purple-300">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+
+                <!-- Player Info Cards -->
+                <div class="grid md:grid-cols-2 gap-4 mb-6">
+                    <div id="player1Card" class="p-4 rounded-xl border-2 border-pink-300 bg-pink-50 text-center">
+                        <div id="player1Avatar" class="text-3xl mb-2"></div>
+                        <div id="player1Name" class="font-bold text-lg text-gray-800"></div>
+                        <div class="text-gray-600">Position: <span id="player1Position">1</span></div>
+                    </div>
+                    
+                    <div id="player2Card" class="p-4 rounded-xl border-2 border-pink-300 bg-pink-50 text-center">
+                        <div id="player2Avatar" class="text-3xl mb-2"></div>
+                        <div id="player2Name" class="font-bold text-lg text-gray-800"></div>
+                        <div class="text-gray-600">Position: <span id="player2Position">1</span></div>
+                    </div>
+                </div>
+
+                <!-- Dice and Controls -->
+                <div class="text-center space-y-4">
+                    <button id="rollDiceBtn" class="w-full md:w-auto px-8 py-4 rounded-xl font-bold text-lg transition-all bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 transform hover:scale-105 flex items-center justify-center gap-3 mx-auto">
+                        🎲 Roll Dice
+                    </button>
+
+                    <div id="rollResult" class="hidden bg-gradient-to-r from-yellow-100 to-orange-100 border-2 border-yellow-400 rounded-xl p-4 font-bold text-lg">
+                        <!-- Roll result will be shown here -->
+                    </div>
+
+                    <div id="winMessage" class="hidden bg-gradient-to-r from-green-100 to-emerald-100 border-2 border-green-400 rounded-xl p-6">
+                        <!-- Win message will be shown here -->
+                    </div>
+
+                    <!-- Game History -->
+                    <div id="gameHistory" class="hidden bg-gray-50 rounded-xl p-4 max-h-32 overflow-y-auto">
+                        <h3 class="font-bold text-gray-700 mb-2">Recent Moves:</h3>
+                        <div id="historyList" class="space-y-1 text-sm text-gray-600">
+                            <!-- History entries will be added here -->
+                        </div>
+                    </div>
+
+                    <button id="newGameBtn" class="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-all">
+                        🔄 New Game
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Tile Info Modal -->
+    <div id="tileModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 modal">
+        <div class="bg-white rounded-3xl p-6 max-w-md w-full max-h-[80vh] overflow-y-auto border-4 border-pink-200">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="tileModalTitle" class="text-xl font-bold text-purple-700"></h3>
+                <button id="closeTileModal" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+            </div>
+            <div id="tileModalContent">
+                <!-- Tile content will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Question Modal -->
+    <div id="questionModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 modal">
+        <div class="bg-white rounded-3xl p-6 max-w-md w-full border-4 border-pink-200">
+            <h3 id="questionTitle" class="text-xl font-bold text-purple-700 mb-4"></h3>
+            <p id="questionText" class="text-gray-700 text-lg mb-6"></p>
+            
+            <!-- Yes/No Buttons -->
+            <div id="yesNoButtons" class="flex gap-3">
+                <button id="yesBtn" class="flex-1 bg-green-500 text-white px-4 py-3 rounded-xl font-semibold hover:bg-green-600 transition-all">
+                    ✅ Yes
+                </button>
+                <button id="noBtn" class="flex-1 bg-red-500 text-white px-4 py-3 rounded-xl font-semibold hover:bg-red-600 transition-all">
+                    ❌ No
+                </button>
+            </div>
+            
+            <!-- Text Input -->
+            <div id="textInput" class="hidden space-y-3">
+                <input type="text" id="answerInput" placeholder="Your answer..." 
+                       class="w-full p-3 border-2 border-purple-300 rounded-lg focus:border-purple-500 focus:outline-none">
+                <div class="flex gap-3">
+                    <button id="submitAnswerBtn" class="flex-1 bg-blue-500 text-white px-4 py-3 rounded-xl font-semibold hover:bg-blue-600 transition-all">
+                        Submit Answer
+                    </button>
+                    <button id="skipAnswerBtn" class="px-4 py-3 bg-gray-500 text-white rounded-xl hover:bg-gray-600 transition-all">
+                        Skip
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game State
+        let gameState = {
+            mode: 'menu',
+            players: {
+                1: { name: '', avatar: '', position: 1, skipNextTurn: false },
+                2: { name: '', avatar: '', position: 1, skipNextTurn: false }
+            },
+            currentPlayer: 1,
+            lastRoll: null,
+            gameWon: false,
+            isOnline: false,
+            gameId: '',
+            selectedAvatar: '',
+            pendingAction: null,
+            gameHistory: []
+        };
+
+        // Constants
+        const BOARD_SIZE = 10;
+        const TOTAL_TILES = 70;
+        
+        const AVATAR_OPTIONS = [
+            '👨', '👨🏻', '👨🏽', '👨🏿', '👩', '👩🏻', '👩🏽', '👩🏿',
+            '🤵', '🤵🏻', '🤵🏽', '🤵🏿', '👰', '👰🏻', '👰🏽', '👰🏿',
+            '🧑', '🧑🏻', '🧑🏽', '🧑🏿', '💑', '👫', '👬', '👭'
+        ];
+
+        const TILE_CONTENT = {
+            1: { text: "Welcome to your marriage preparation journey! 💕", type: "start", icon: "💒" },
+            4: { text: "What's your planned wedding date? Correct answer moves to 11", type: "ladder", icon: "🪜" },
+            5: { text: "Were you saved before marriage? Yes→30, No→7", type: "branch", icon: "✝️" },
+            6: { text: "Read Romans 4:20 together", type: "scripture", icon: "📖" },
+            8: { text: "Serve your partner their favorite drink", type: "activity", icon: "☕" },
+            10: { text: "\"Bone of my bones, flesh of my flesh\" - Genesis 2:23", type: "note", icon: "💭" },
+            11: { text: "Ladder destination - Well done!", type: "ladder", icon: "🎯" },
+            12: { text: "What was Sunday's sermon scripture? Wrong→5", type: "quiz", icon: "🤔" },
+            16: { text: "Read Song of Solomon 8:6 together", type: "scripture", icon: "📖" },
+            17: { text: "Did you pray this morning? No = skip turn", type: "special", icon: "🙏" },
+            20: { text: "Read and discuss Psalm 37:4", type: "scripture", icon: "📖" },
+            22: { text: "Quality family time yesterday? Yes→31, No=skip turn", type: "branch", icon: "⏰" },
+            25: { text: "When did you first meet? Can't remember? Go back 2", type: "quiz", icon: "📅" },
+            27: { text: "Look into your partner's eyes and say 'I love you'", type: "activity", icon: "👁️" },
+            31: { text: "Said 'I love you' this morning? No→2", type: "quiz", icon: "💬" },
+            33: { text: "Read Ephesians 5:22-29 together", type: "scripture", icon: "📖" },
+            35: { text: "Love requires intentional care and positive action", type: "note", icon: "💡" },
+            44: { text: "Read Song of Solomon 1:2", type: "scripture", icon: "📖" },
+            47: { text: "Your partner's birthday? Wrong→16", type: "quiz", icon: "🎂" },
+            51: { text: "Attended Bible study this week? Yes→63, No→36", type: "branch", icon: "⛪" },
+            53: { text: "Give your partner a warm, loving hug", type: "activity", icon: "🤗" },
+            56: { text: "Would you choose to marry your partner again? Think carefully...", type: "activity", icon: "💭" },
+            58: { text: "Sunday's sermon topic? Wrong→31", type: "quiz", icon: "🗣️" },
+            60: { text: "Ladder to the final stretch!", type: "ladder", icon: "🪜" },
+            62: { text: "Read Proverbs 5:15-19 together", type: "scripture", icon: "📖" },
+            63: { text: "Share a loving kiss (or meaningful touch)", type: "activity", icon: "💋" },
+            66: { text: "Share 3 things you love about your partner and favorite memories", type: "activity", icon: "❤️" },
+            67: { text: "Read Song of Solomon 4 together", type: "scripture", icon: "📖" },
+            68: { text: "Prepare your hearts for intimacy and unity", type: "note", icon: "🌹" },
+            70: { text: "CONGRATULATIONS! Your marriage preparation is complete! 🎉", type: "finish", icon: "🏆" }
+        };
+
+        const LADDERS = { 4: 11, 11: 44, 60: 66 };
+
+        const TILE_DECORATIONS = {
+            1: "💒", 2: "💐", 3: "💭", 4: "🪜", 5: "✝️", 6: "📖", 7: "💃", 8: "☕", 9: "🎵", 10: "👫",
+            11: "🎯", 12: "🤔", 13: "🎭", 14: "🍽️", 15: "💝", 16: "📖", 17: "🙏", 18: "🎪", 19: "💖", 20: "📖",
+            21: "👨‍👩‍👧‍👦", 22: "⏰", 23: "🌟", 24: "🏖️", 25: "📅", 26: "🌺", 27: "👁️", 28: "💕", 29: "🕯️", 30: "💞",
+            31: "💬", 32: "🏰", 33: "📖", 34: "🙏", 35: "💡", 36: "💎", 37: "🎈", 38: "🌈", 39: "🦢", 40: "💗",
+            41: "🥂", 42: "🎼", 43: "💃", 44: "📖", 45: "🌹", 46: "💫", 47: "🎂", 48: "🎭", 49: "🍾", 50: "💘",
+            51: "⛪", 52: "🎪", 53: "🤗", 54: "💒", 55: "🎊", 56: "💭", 57: "🦋", 58: "🗣️", 59: "🕊️", 60: "🪜",
+            61: "💍", 62: "📖", 63: "💋", 64: "🎉", 65: "🌺", 66: "❤️", 67: "📖", 68: "🌹", 69: "💐", 70: "🏆"
+        };
+
+        // Utility Functions
+        function generateGameId() {
+            return 'MPG' + Math.random().toString(36).substring(2, 8).toUpperCase();
+        }
+
+        function showScreen(screenId) {
+            const screens = ['mainMenu', 'onlineSetup', 'joinGameScreen', 'playerSetup', 'gameScreen'];
+            screens.forEach(screen => {
+                document.getElementById(screen).classList.add('hidden');
+            });
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        function saveGameState() {
+            if (gameState.isOnline && gameState.gameId) {
+                const saveData = {
+                    players: gameState.players,
+                    currentPlayer: gameState.currentPlayer,
+                    lastRoll: gameState.lastRoll,
+                    gameWon: gameState.gameWon,
+                    gameHistory: gameState.gameHistory,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem(`marriage_game_${gameState.gameId}`, JSON.stringify(saveData));
+            }
+        }
+
+        function loadGameState(gameId) {
+            const savedGame = localStorage.getItem(`marriage_game_${gameId}`);
+            if (savedGame) {
+                const saveData = JSON.parse(savedGame);
+                gameState.players = saveData.players || gameState.players;
+                gameState.currentPlayer = saveData.currentPlayer || 1;
+                gameState.lastRoll = saveData.lastRoll;
+                gameState.gameWon = saveData.gameWon || false;
+                gameState.gameHistory = saveData.gameHistory || [];
+                return true;
+            }
+            return false;
+        }
+
+        function copyToClipboard(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => {
+                    alert('Game ID copied to clipboard! 📋');
+                }).catch(() => {
+                    prompt('Copy this Game ID:', text);
+                });
+            } else {
+                prompt('Copy this Game ID:', text);
+            }
+        }
+
+        // Board Functions
+        function getTileNumber(index) {
+            const row = Math.floor(index / BOARD_SIZE);
+            const col = index % BOARD_SIZE;
+            return row % 2 === 0 ? row * BOARD_SIZE + col + 1 : row * BOARD_SIZE + (BOARD_SIZE - col);
+        }
+
+        function getTileClass(tileNumber) {
+            const content = TILE_CONTENT[tileNumber];
+            let classes = ['tile', 'board-tile'];
+            
+            if (content) {
+                classes.push(`tile-${content.type}`);
+            }
+            
+            return classes.join(' ');
+        }
+
+        function createBoard() {
+            const board = document.getElementById('gameBoard');
+            board.innerHTML = '';
+            
+            for (let i = 0; i < TOTAL_TILES; i++) {
+                const tileNumber = getTileNumber(TOTAL_TILES - 1 - i);
+                const tile = document.createElement('div');
+                tile.className = getTileClass(tileNumber);
+                tile.id = `tile-${tileNumber}`;
+                
+                let tileHTML = `<div class="tile-number">${tileNumber}</div>`;
+                
+                if (TILE_DECORATIONS[tileNumber]) {
+                    tileHTML += `<div class="tile-decoration">${TILE_DECORATIONS[tileNumber]}</div>`;
+                }
+                
+                tile.innerHTML = tileHTML;
+                
+                if (TILE_CONTENT[tileNumber] && TILE_CONTENT[tileNumber].text) {
+                    tile.addEventListener('click', () => showTileModal(tileNumber));
+                }
+                
+                board.appendChild(tile);
+            }
+            
+            setTimeout(() => {
+                updatePlayerPositions();
+            }, 100);
+        }
+
+        function updatePlayerPositions() {
+            // Remove existing avatars
+            document.querySelectorAll('.player-avatar').forEach(avatar => avatar.remove());
+            
+            // Add player avatars
+            [1, 2].forEach(playerId => {
+                if (gameState.players[playerId].name) {
+                    const avatar = document.createElement('div');
+                    avatar.className = 'player-avatar';
+                    avatar.id = `player-${playerId}-avatar`;
+                    avatar.textContent = gameState.players[playerId].avatar;
+                    
+                    const tile = document.getElementById(`tile-${gameState.players[playerId].position}`);
+                    if (tile) {
+                        const offsetX = playerId === 1 ? -15 : 15;
+                        const offsetY = playerId === 1 ? -15 : 15;
+                        
+                        avatar.style.left = `calc(50% + ${offsetX}px)`;
+                        avatar.style.top = `calc(50% + ${offsetY}px)`;
+                        avatar.style.transform = 'translate(-50%, -50%)';
+                        
+                        tile.appendChild(avatar);
+                    }
+                }
+            });
+        }
+
+        // Game Functions
+        function createOnlineGame() {
+            gameState.gameId = generateGameId();
+            gameState.isOnline = true;
+            document.getElementById('gameIdDisplay').textContent = gameState.gameId;
+            showScreen('onlineSetup');
+            saveGameState();
+        }
+
+        function joinGame() {
+            const joinId = document.getElementById('joinGameInput').value.trim();
+            if (!joinId) {
+                alert('Please enter a Game ID');
+                return;
+            }
+            
+            if (loadGameState(joinId)) {
+                gameState.gameId = joinId;
+                gameState.isOnline = true;
+                showPlayerSetup();
+            } else {
+                alert('Game not found. Please check the Game ID.');
+            }
+        }
+
+        function showPlayerSetup() {
+            showScreen('playerSetup');
+            if (gameState.isOnline) {
+                document.getElementById('onlineStatus').classList.remove('hidden');
+                document.getElementById('gameIdInfo').classList.remove('hidden');
+                document.getElementById('currentGameIdDisplay').textContent = gameState.gameId;
+            }
+            setupAvatarGrid();
+        }
+
+        function setupAvatarGrid() {
+            const grid = document.getElementById('avatarGrid');
+            grid.innerHTML = '';
+            
+            AVATAR_OPTIONS.forEach(avatar => {
+                const button = document.createElement('button');
+                button.className = 'p-3 text-2xl rounded-lg border-2 transition-all hover:scale-110 border-gray-300 bg-white hover:border-purple-300';
+                button.textContent = avatar;
+                button.onclick = () => selectAvatar(avatar, button);
+                grid.appendChild(button);
+            });
+        }
+
+        function selectAvatar(avatar, button) {
+            // Remove selection from all avatars
+            document.querySelectorAll('#avatarGrid button').forEach(btn => {
+                btn.className = 'p-3 text-2xl rounded-lg border-2 transition-all hover:scale-110 border-gray-300 bg-white hover:border-purple-300';
+            });
+            
+            // Select this avatar
+            button.className = 'p-3 text-2xl rounded-lg border-2 transition-all hover:scale-110 border-purple-500 bg-purple-100 transform scale-110';
+            gameState.selectedAvatar = avatar;
+        }
+
+        function setupPlayer() {
+            const playerName = document.getElementById('playerNameInput').value.trim();
+            
+            if (!playerName || !gameState.selectedAvatar) {
+                alert('Please enter your name and select an avatar!');
+                return;
+            }
+            
+            if (gameState.isOnline) {
+                // Find available player slot
+                const availableSlot = !gameState.players[1].name ? 1 : (!gameState.players[2].name ? 2 : null);
+                
+                if (!availableSlot) {
+                    alert('Game is full!');
+                    return;
+                }
+                
+                gameState.players[availableSlot].name = playerName;
+                gameState.players[availableSlot].avatar = gameState.selectedAvatar;
+                
+                saveGameState();
+                
+                if (gameState.players[1].name && gameState.players[2].name) {
+                    startGame();
+                } else {
+                    alert('Waiting for other player...');
+                    // Set up polling to check for other player
+                    const checkInterval = setInterval(() => {
+                        loadGameState(gameState.gameId);
+                        if (gameState.players[1].name && gameState.players[2].name) {
+                            clearInterval(checkInterval);
+                            startGame();
+                        }
+                    }, 2000);
+                }
+            } else {
+                // Local game setup
+                gameState.players[1].name = playerName;
+                gameState.players[1].avatar = gameState.selectedAvatar;
+                
+                // For now, create a second player for local testing
+                gameState.players[2].name = 'Player 2';
+                gameState.players[2].avatar = '👩';
+                
+                startGame();
+            }
+        }
+
+        function startGame() {
+            showScreen('gameScreen');
+            if (gameState.isOnline) {
+                document.getElementById('gameOnlineStatus').classList.remove('hidden');
+            }
+            createBoard();
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            // Update current player display
+            const currentPlayerDisplay = document.getElementById('currentPlayerDisplay');
+            currentPlayerDisplay.innerHTML = `
+                <div class="text-2xl md:text-3xl font-bold text-purple-700">
+                    ${gameState.players[gameState.currentPlayer].avatar} ${gameState.players[gameState.currentPlayer].name}'s Turn
+                </div>
+                ${gameState.players[gameState.currentPlayer].skipNextTurn ? '<div class="text-orange-600 font-semibold mt-2">⏸️ Will skip next turn!</div>' : ''}
+            `;
+            
+            // Update player cards
+            [1, 2].forEach(playerId => {
+                const card = document.getElementById(`player${playerId}Card`);
+                if (gameState.currentPlayer === playerId) {
+                    card.className = 'p-4 rounded-xl border-2 border-purple-500 bg-purple-50 shadow-lg transform scale-105 text-center transition-all';
+                } else {
+                    card.className = 'p-4 rounded-xl border-2 border-pink-300 bg-pink-50 text-center transition-all';
+                }
+                
+                document.getElementById(`player${playerId}Avatar`).textContent = gameState.players[playerId].avatar;
+                document.getElementById(`player${playerId}Name`).textContent = gameState.players[playerId].name;
+                document.getElementById(`player${playerId}Position`).textContent = gameState.players[playerId].position;
+            });
+            
+            // Update roll button
+            const rollBtn = document.getElementById('rollDiceBtn');
+            rollBtn.disabled = gameState.gameWon || gameState.players[gameState.currentPlayer].skipNextTurn;
+            
+            if (gameState.lastRoll) {
+                document.getElementById('rollResult').classList.remove('hidden');
+                document.getElementById('rollResult').textContent = `🎲 Rolled: ${gameState.lastRoll}`;
+            }
+            
+            updatePlayerPositions();
+            
+            if (gameState.gameWon) {
+                const winner = gameState.players[1].position >= TOTAL_TILES ? gameState.players[1] : gameState.players[2];
+                document.getElementById('winMessage').classList.remove('hidden');
+                document.getElementById('winMessage').innerHTML = `
+                    <div class="text-4xl mb-3">${winner.avatar}</div>
+                    <div class="text-2xl font-bold text-green-700 mb-2">🎉 ${winner.name} Wins! 🎉</div>
+                    <div class="text-green-600">Congratulations on completing your marriage preparation journey together!</div>
+                `;
+            }
+            
+            // Update game history
+            if (gameState.gameHistory.length > 0) {
+                document.getElementById('gameHistory').classList.remove('hidden');
+                const historyList = document.getElementById('historyList');
+                historyList.innerHTML = '';
+                gameState.gameHistory.slice(-5).forEach(entry => {
+                    const div = document.createElement('div');
+                    div.textContent = entry;
+                    historyList.appendChild(div);
+                });
+            }
+            
+            saveGameState();
+        }
+
+        async function rollDice() {
+            if (gameState.gameWon) return;
+            
+            if (gameState.players[gameState.currentPlayer].skipNextTurn) {
+                gameState.players[gameState.currentPlayer].skipNextTurn = false;
+                gameState.gameHistory.push(`${gameState.players[gameState.currentPlayer].name} skipped their turn`);
+                switchPlayer();
+                updateDisplay();
+                return;
+            }
+            
+            const rollBtn = document.getElementById('rollDiceBtn');
+            rollBtn.classList.add('rolling');
+            rollBtn.textContent = 'Rolling...';
+            
+            // Animate dice roll
+            for (let i = 0; i < 10; i++) {
+                gameState.lastRoll = Math.floor(Math.random() * 6) + 1;
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            const finalRoll = Math.floor(Math.random() * 6) + 1;
+            gameState.lastRoll = finalRoll;
+            
+            rollBtn.classList.remove('rolling');
+            rollBtn.textContent = '🎲 Roll Dice';
+            
+            const oldPosition = gameState.players[gameState.currentPlayer].position;
+            let newPosition = oldPosition + finalRoll;
+            
+            if (newPosition >= TOTAL_TILES) {
+                newPosition = TOTAL_TILES;
+                gameState.gameWon = true;
+            }
+            
+            gameState.players[gameState.currentPlayer].position = newPosition;
+            gameState.gameHistory.push(`${gameState.players[gameState.currentPlayer].name} rolled ${finalRoll} and moved from ${oldPosition} to ${newPosition}`);
+            
+            updateDisplay();
+            
+            // Handle special tiles after movement
+            setTimeout(() => {
+                handleSpecialTile(newPosition, gameState.currentPlayer);
+            }, 1000);
+        }
+
+        function switchPlayer() {
+            gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
+            gameState.lastRoll = null;
+            document.getElementById('rollResult').classList.add('hidden');
+        }
+
+        function handleSpecialTile(position, playerId) {
+            const content = TILE_CONTENT[position];
+            if (!content) {
+                switchPlayer();
+                updateDisplay();
+                return;
+            }
+
+            // Handle ladders
+            if (LADDERS[position]) {
+                setTimeout(() => {
+                    gameState.players[playerId].position = LADDERS[position];
+                    gameState.gameHistory.push(`${gameState.players[playerId].name} climbed ladder from ${position} to ${LADDERS[position]}!`);
+                    updateDisplay();
+                    switchPlayer();
+                    updateDisplay();
+                }, 500);
+                return;
+            }
+
+            // Handle interactive tiles
+            const interactiveTiles = [5, 12, 17, 22, 25, 31, 47, 51, 58];
+            if (interactiveTiles.includes(position)) {
+                showQuestionModal(position, playerId);
+            } else {
+                switchPlayer();
+                updateDisplay();
+            }
+        }
+
+        function showQuestionModal(position, playerId) {
+            const questions = {
+                5: { title: "Salvation", question: "Were you saved before marriage?", type: "yesno" },
+                12: { title: "Scripture Knowledge", question: "What was the Scripture reference for Sunday's sermon?", type: "text" },
+                17: { title: "Prayer Life", question: "Did you pray this morning?", type: "yesno" },
+                22: { title: "Family Time", question: "Did you spend quality time with family yesterday?", type: "yesno" },
+                25: { title: "Memory Lane", question: "When did you first meet each other?", type: "text" },
+                31: { title: "Love Expression", question: "Did you tell your spouse 'I love you' this morning?", type: "yesno" },
+                47: { title: "Important Dates", question: "What is your partner's birthday?", type: "text" },
+                51: { title: "Spiritual Growth", question: "Did you attend Bible study or church this week?", type: "yesno" },
+                58: { title: "Sermon Attention", question: "What was the topic of Sunday's sermon?", type: "text" }
+            };
+
+            const q = questions[position];
+            if (q) {
+                gameState.pendingAction = { position, playerId, questionType: q.type };
+                
+                document.getElementById('questionTitle').textContent = q.title;
+                document.getElementById('questionText').textContent = q.question;
+                
+                if (q.type === 'yesno') {
+                    document.getElementById('yesNoButtons').classList.remove('hidden');
+                    document.getElementById('textInput').classList.add('hidden');
+                } else {
+                    document.getElementById('yesNoButtons').classList.add('hidden');
+                    document.getElementById('textInput').classList.remove('hidden');
+                    document.getElementById('answerInput').value = '';
+                }
+                
+                document.getElementById('questionModal').classList.remove('hidden');
+            }
+        }
+
+        function handleAnswer(answer) {
+            document.getElementById('questionModal').classList.add('hidden');
+            
+            if (!gameState.pendingAction) return;
+            
+            const { position, playerId } = gameState.pendingAction;
+            
+            const effects = {
+                5: answer ? 30 : 7,
+                12: answer ? null : 5,
+                17: answer ? null : 'skip',
+                22: answer ? 31 : 'skip',
+                25: answer ? null : Math.max(1, position - 2),
+                31: answer ? null : 2,
+                47: answer ? null : 16,
+                51: answer ? 63 : 36,
+                58: answer ? null : 31
+            };
+            
+            const effect = effects[position];
+            
+            if (effect === 'skip') {
+                gameState.players[playerId].skipNextTurn = true;
+                gameState.gameHistory.push(`${gameState.players[playerId].name} will skip their next turn`);
+            } else if (typeof effect === 'number') {
+                setTimeout(() => {
+                    gameState.players[playerId].position = effect;
+                    gameState.gameHistory.push(`${gameState.players[playerId].name} moved to position ${effect}`);
+                    updateDisplay();
+                }, 500);
+            }
+            
+            gameState.pendingAction = null;
+            setTimeout(() => {
+                switchPlayer();
+                updateDisplay();
+            }, 1000);
+        }
+
+        function showTileModal(tileNumber) {
+            const content = TILE_CONTENT[tileNumber];
+            if (!content || !content.text) return;
+            
+            document.getElementById('tileModalTitle').textContent = `Square ${tileNumber}`;
+            
+            let modalHTML = '';
+            if (content.type === 'scripture') {
+                modalHTML = `
+                    <div class="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-4 mb-4">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-yellow-600">📖</span>
+                            <h4 class="font-bold text-yellow-800">Scripture Reading</h4>
+                        </div>
+                        <p class="text-yellow-700">${content.text}</p>
+                    </div>
+                `;
+            } else if (content.type === 'activity') {
+                modalHTML = `
+                    <div class="bg-blue-50 border-2 border-blue-300 rounded-xl p-4 mb-4">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-blue-600">💕</span>
+                            <h4 class="font-bold text-blue-800">Activity</h4>
+                        </div>
+                        <p class="text-blue-700">${content.text}</p>
+                    </div>
+                `;
+            } else {
+                modalHTML = `
+                    <div class="bg-purple-50 border-2 border-purple-300 rounded-xl p-4 mb-4">
+                        <p class="text-purple-700">${content.text}</p>
+                    </div>
+                `;
+            }
+            
+            document.getElementById('tileModalContent').innerHTML = modalHTML;
+            document.getElementById('tileModal').classList.remove('hidden');
+        }
+
+        function resetGame() {
+            gameState = {
+                mode: 'menu',
+                players: {
+                    1: { name: '', avatar: '', position: 1, skipNextTurn: false },
+                    2: { name: '', avatar: '', position: 1, skipNextTurn: false }
+                },
+                currentPlayer: 1,
+                lastRoll: null,
+                gameWon: false,
+                isOnline: false,
+                gameId: '',
+                selectedAvatar: '',
+                pendingAction: null,
+                gameHistory: []
+            };
+            
+            document.getElementById('playerNameInput').value = '';
+            document.getElementById('joinGameInput').value = '';
+            document.getElementById('rollResult').classList.add('hidden');
+            document.getElementById('winMessage').classList.add('hidden');
+            document.getElementById('gameHistory').classList.add('hidden');
+            
+            showScreen('mainMenu');
+        }
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Main menu events
+            document.getElementById('toggleInstructions').addEventListener('click', () => {
+                document.getElementById('instructionsPanel').classList.toggle('hidden');
+            });
+            
+            document.getElementById('closeInstructions').addEventListener('click', () => {
+                document.getElementById('instructionsPanel').classList.add('hidden');
+            });
+            
+            document.getElementById('createOnlineGame').addEventListener('click', createOnlineGame);
+            document.getElementById('joinGameBtn').addEventListener('click', () => showScreen('joinGameScreen'));
+            document.getElementById('playLocalBtn').addEventListener('click', () => {
+                gameState.isOnline = false;
+                showPlayerSetup();
+            });
+            
+            // Online setup events
+            document.getElementById('copyGameId').addEventListener('click', () => {
+                copyToClipboard(document.getElementById('gameIdDisplay').textContent);
+            });
+            document.getElementById('setupPlayerBtn').addEventListener('click', () => showPlayerSetup());
+            document.getElementById('backToMenuFromSetup').addEventListener('click', () => showScreen('mainMenu'));
+            
+            // Join game events
+            document.getElementById('joinGameSubmit').addEventListener('click', joinGame);
+            document.getElementById('backToMenuFromJoin').addEventListener('click', () => showScreen('mainMenu'));
+            
+            // Player setup events
+            document.getElementById('readyToPlay').addEventListener('click', setupPlayer);
+            document.getElementById('backToMenuFromPlayerSetup').addEventListener('click', () => showScreen('mainMenu'));
+            
+            // Game events
+            document.getElementById('rollDiceBtn').addEventListener('click', rollDice);
+            document.getElementById('newGameBtn').addEventListener('click', resetGame);
+            
+            // Modal events
+            document.getElementById('closeTileModal').addEventListener('click', () => {
+                document.getElementById('tileModal').classList.add('hidden');
+            });
+            
+            document.getElementById('yesBtn').addEventListener('click', () => handleAnswer(true));
+            document.getElementById('noBtn').addEventListener('click', () => handleAnswer(false));
+            
+            document.getElementById('submitAnswerBtn').addEventListener('click', () => {
+                const answer = document.getElementById('answerInput').value.trim();
+                handleAnswer(answer || false);
+            });
+            
+            document.getElementById('skipAnswerBtn').addEventListener('click', () => handleAnswer(false));
+            
+            // Enter key for answer input
+            document.getElementById('answerInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    const answer = e.target.value.trim();
+                    handleAnswer(answer || false);
+                }
+            });
+            
+            // Enter key for join game input
+            document.getElementById('joinGameInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    joinGame();
+                }
+            });
+            
+            // Click outside modals to close
+            document.getElementById('tileModal').addEventListener('click', (e) => {
+                if (e.target.id === 'tileModal') {
+                    document.getElementById('tileModal').classList.add('hidden');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
